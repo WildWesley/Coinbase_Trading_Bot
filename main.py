@@ -95,7 +95,7 @@ class CoinbaseBot:
         """
 
         stock_values = pd.DataFrame({"Values": close_prices})
-        ema = stock_values.ewm(com=span).mean()
+        ema = stock_values.ewm(span=span).mean()
         return ema["Values"].tolist()
 
     @staticmethod
@@ -127,14 +127,14 @@ class CoinbaseBot:
         get_ema() function to determine whether to buy or sell a stock
         """
 
-        long_ema = CoinbaseBot.get_ema(price_data, 100)
-        short_ema = CoinbaseBot.get_ema(price_data, 12)
+        long_ema = CoinbaseBot.get_ema(price_data, 15)
+        short_ema = CoinbaseBot.get_ema(price_data, 3)
         change = CoinbaseBot.get_cross(
             short_ema[-2], short_ema[-1], long_ema[-2], long_ema[-1]
         )
         if change == "low-high":
             return "buy", short_ema, long_ema
-        elif change == "high-low":
+        elif change == "high-low" or change == "low-low":
             return "sell", short_ema, long_ema
         else:
             return "none", short_ema, long_ema
@@ -153,7 +153,7 @@ class CoinbaseBot:
         plt.plot(price_data, label="Stock Values")
         plt.plot(short_ema, label="Short EMA")
         plt.plot(long_ema, label="Long EMA")
-        plt.xlabel("Hours")
+        plt.xlabel("15 Minute Increment")
         plt.ylabel("Price")
         plt.savefig(f"Trade_Photos/{product}_for_{price_data[-1]}.png")
         plt.clf()
@@ -176,7 +176,16 @@ def main():
     """
     input("You crazy??? Y/N\n")
     # The blacklist is all the crypto currencies that I think the bot would be wayyy to bad at trading. Mainly the ones that are binary looking.
-    blacklist = ["PAX-USD", "UST-USD", "PRO-USD", "REP-USD", "USDT-USD", "MUSD-USD"]
+    blacklist = [
+        "PAX-USD",
+        "UST-USD",
+        "PRO-USD",
+        "REP-USD",
+        "USDT-USD",
+        "MUSD-USD",
+        "DIA-USD",
+        "RAI-USD",
+    ]
 
     public, secret, password = CoinbaseBot.grab_account_info("Info.txt")
     auth_client = cbpro.AuthenticatedClient(public, secret, password)
